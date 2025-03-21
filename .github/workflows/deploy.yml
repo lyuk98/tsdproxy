@@ -1,0 +1,36 @@
+name: Deploy TSDProxy
+
+on:
+  push:
+    branches:
+      - deployment
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy TSDProxy
+    env:
+      MACHINE: raspberrypi
+      USER: webserver
+    steps:
+      - name: Setup Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          ref: deployment
+          sparse-checkout: |
+            containers
+      - name: Install unit file to host
+        run: |
+          ssh -o StrictHostKeyChecking=no $USER@$MACHINE "mkdir -p -- ~/tsdproxy/data ~/tsdproxy/config ~/.config/containers/systemd"
+          scp -o StrictHostKeyChecking=no containers/systemd/tsdproxy.container $USER@$MACHINE:~/.config/containers/systemd/tsdproxy.container
+          ssh -o StrictHostKeyChecking=no $USER@$MACHINE "systemctl --user is-active tsdproxy.service && systemctl --user stop tsdproxy.service || true"
+          ssh -o StrictHostKeyChecking=no $USER@$MACHINE "systemctl --user daemon-reload"
+      - name: Start TSDProxy
+        run: |
+          ssh -o StrictHostKeyChecking=no $USER@$MACHINE "systemctl --user start tsdproxy.service"
