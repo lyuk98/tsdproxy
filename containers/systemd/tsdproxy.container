@@ -1,0 +1,17 @@
+[Unit]
+Description=Tailscale Docker Proxy
+
+[Container]
+HostName=tsdproxy
+ContainerName=tsdproxy
+Image=docker.io/almeidapaulopt/tsdproxy:2
+PublishPort=8080:8080
+Volume=%t/podman/podman.sock:/var/run/docker.sock
+Volume=%h/tsdproxy/data:/data
+Volume=%h/tsdproxy/config:/config
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
