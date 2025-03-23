@@ -14,4 +14,4 @@ Volume=%h/tsdproxy/config:/config
 Restart=always
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=multi-user.target default.target
